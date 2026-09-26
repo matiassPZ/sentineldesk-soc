@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Roles del sistema (Control de Acceso RBAC)
+enum Role {
+  ADMIN
+  TECH
+  USER
+}
+
+// 2. Estados y Prioridades de los Incidentes
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// 3. Tabla de Usuarios
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  incidentsCreated  Incident[] @relation("CreatedByUser")
+  incidentsAssigned Incident[] @relation("AssignedToUser")
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+// 4. Tabla de Incidentes (Tickets)
+model Incident {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  status      Status   @default(OPEN)
+  priority    Priority @default(MEDIUM)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Claves foráneas (Relaciones)
+  authorId     String
+  author       User      @relation("CreatedByUser", fields: [authorId], references: [id])
+  
+  assignedToId String?
+  assignedTo   User?     @relation("AssignedToUser", fields: [assignedToId], references: [id])
+
+  auditLogs    AuditLog[]
+
+  @@map("incidents")
+}
+
+// 5. Tabla de Auditoría (Trazabilidad y Ciberseguridad)
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String   // Ej: LOGIN_SUCCESS, FAILED_LOGIN, ROLE_CHANGE
+  ipAddress  String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  // Relaciones
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  incidentId String?
+  incident   Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}

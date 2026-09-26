@@ -1,0 +1,38 @@
+# Environment Variables & Secrets (CRÍTICO: No subir a Git)
+.env
+.env.*
+!.env.example
+
+# Dependencias de Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Compilación y artefactos de distribución
+dist/
+build/
+*.tsbuildinfo
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configuraciones de Editor e IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Metadatos de Agentes y asistentes AI
+.gemini/
+.claude/
+.cursor/
+.agents/
+.devin/
+
+# Logs de ejecución
+logs/
+*.log

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Documento Técnico SentinelDesk</title>
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #222; max-width: 800px; margin: 40px auto; }
+  h1 { color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }
+  h2 { color: #1e40af; margin-top: 28px; }
+  h3 { color: #2563eb; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th, td { border: 1px solid #d1d5db; padding: 10px 14px; text-align: left; }
+  th { background-color: #f3f4f6; color: #111827; }
+  code, pre { font-family: Consolas, monospace; background-color: #f3f4f6; padding: 2px 5px; border-radius: 4px; }
+  pre { padding: 15px; overflow-x: auto; background-color: #1f2937; color: #f9fafb; border-radius: 8px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<h1>🛡️ DOCUMENTO TÉCNICO DE PROYECTO: SENTINELDESK</h1>
+<p><strong>Enterprise Incident Management & SOC Dashboard with RBAC and Forensics</strong></p>
+
+<h2>1. Resumen Ejecutivo</h2>
+<p><strong>SentinelDesk</strong> es una solución Full Stack empresarial para la gestión y mitigación de incidentes de seguridad de la información. El sistema fue diseñado bajo el principio de menor privilegio (<em>Principle of Least Privilege</em>), incorporando control de acceso basado en roles (<strong>RBAC</strong>), autenticación sin estado mediante <strong>Tokens JWT</strong>, almacenamiento seguro de credenciales mediante <strong>Salted Bcrypt Hashing</strong> y un registro inmutable de <strong>auditoría forense</strong> para trazabilidad de eventos.</p>
+
+<h2>2. Stack Tecnológico Dominado e Integrado</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Capa</th>
+      <th>Tecnología</th>
+      <th>Propósito</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Base de Datos</strong></td>
+      <td>PostgreSQL en Neon.tech (AWS Ohio)</td>
+      <td>Almacenamiento relacional serverless en la nube con alta disponibilidad.</td>
+    </tr>
+    <tr>
+      <td><strong>ORM</strong></td>
+      <td>Prisma 5 (Engine estable)</td>
+      <td>Mapeo objeto-relacional, migraciones declarativas y consultas tipadas.</td>
+    </tr>
+    <tr>
+      <td><strong>Runtime & Servidor</strong></td>
+      <td>Node.js + Express (ESM)</td>
+      <td>Servidor API RESTful de alto rendimiento configurado en módulos modernos.</td>
+    </tr>
+    <tr>
+      <td><strong>Tipado Estricto</strong></td>
+      <td>TypeScript</td>
+      <td>Garantía de robustez en tiempo de compilación y tipado de interfaces.</td>
+    </tr>
+    <tr>
+      <td><strong>Criptografía</strong></td>
+      <td>BcryptJS + JSON Web Tokens (JWT)</td>
+      <td>Hashing unidireccional y emisión de credenciales de sesión firmadas.</td>
+    </tr>
+    <tr>
+      <td><strong>Frontend</strong></td>
+      <td>HTML5, CSS3 (SOC Dark Theme) y Vanilla JS</td>
+      <td>Interfaz ágil, reactiva y desacoplada consumiendo la API mediante Fetch.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. Arquitectura del Sistema</h2>
+<pre>
+  [ CLIENTE (Navegador) ]
+            │  (HTML5 / CSS3 / JavaScript asíncrono)
+            ▼
+  [ API REST (Express / Node.js) ]
+            │  ├─ Middleware Auth (Verificación JWT)
+            │  └─ Middleware RBAC (Filtro por roles ADMIN / TECH / USER)
+            ▼
+  [ CAPA DE PERSISTENCIA (Prisma ORM) ]
+            │  (Cifrado Bcrypt / Validaciones de tipo)
+            ▼
+  [ POSTGRESQL CLOUD (Neon.tech en AWS Ohio) ]
+            ├─ Users (Credenciales con Hash)
+            ├─ Incidents (Tickets asignados y estados)
+            └─ AuditLogs (Trazabilidad con IP y marcas de tiempo)
+</pre>
+
+<h2>4. Desafíos Técnicos y Resoluciones de Ingeniería</h2>
+<ul>
+  <li><strong>Cuellos de Botella de E/S en almacenamiento externo (USB vs SSD):</strong> Se superó la lentitud de escritura en memorias externas migrando el repositorio al disco SSD local (<code>C:\Proyectos\</code>), acelerando las operaciones de paquetes.</li>
+  <li><strong>Estabilidad del ORM (Prisma 8 RC vs Prisma 5):</strong> Se resolvió la incompatibilidad de dependencias preliminares adoptando la versión de producción estable <code>prisma@5</code>.</li>
+  <li><strong>Alineación de Módulos ECMAScript (ESM) y TypeScript:</strong> Se solucionaron errores de compilación ajustando <code>package.json</code> con <code>"type": "module"</code> y optimizando <code>tsconfig.json</code> con directivas <code>NodeNext</code>.</li>
+  <li><strong>Manejo Estricto de Parámetros de Ruta:</strong> Se resolvió la ambigüedad tipada de Express en TypeScript mediante aserción explícita (<code>req.params.id as string</code>).</li>
+</ul>
+
+<h2>5. Características de Seguridad Implementadas</h2>
+<ul>
+  <li><strong>Cifrado Unidireccional:</strong> Las contraseñas se almacenan mediante algoritmos de hash con salting de 10 rondas (<code>$2b$10$...</code>), impidiendo su recuperación en caso de brechas.</li>
+  <li><strong>Autenticación sin Estado (Stateless JWT):</strong> Las sesiones se gestionan mediante tokens firmados enviados en cabeceras <code>Authorization: Bearer</code>.</li>
+  <li><strong>Control de Acceso Basado en Roles (RBAC):</strong> Separación lógica donde los administradores y técnicos operan incidencias globales, y los usuarios estándar acceden únicamente a sus registros personales.</li>
+  <li><strong>Auditoría Forense Inmutable (AuditLog):</strong> Registro persistente de inicios de sesión, creaciones y cambios de estado con IP de origen y marcas de tiempo.</li>
+</ul>
+</body>
+</html>

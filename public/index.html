@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelDesk - SOC Incident Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Contenedor de Autenticación -->
+  <div id="auth-section" class="auth-wrapper">
+    <div class="card auth-card">
+      <div class="logo">
+        <span class="icon">🛡️</span>
+        <h1>SentinelDesk</h1>
+        <p class="subtitle">Security Operations & Incident Response</p>
+      </div>
+
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email">Correo Corporativo</label>
+          <input type="email" id="email" required placeholder="admin@sentineldesk.com" value="admin@sentineldesk.com">
+        </div>
+
+        <div class="input-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" required placeholder="••••••••" value="AdminPass2026!">
+        </div>
+
+        <button type="submit" id="btn-login" class="btn btn-primary">Iniciar Sesión</button>
+        <div id="auth-error" class="error-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Principal (Protegido tras Login) -->
+  <div id="dashboard-section" class="dashboard-wrapper hidden">
+    <header class="topbar">
+      <div class="brand">
+        <span class="shield">🛡️</span>
+        <h2>SentinelDesk <span>// Operations</span></h2>
+      </div>
+
+      <div class="user-pill">
+        <div class="user-info">
+          <span id="user-name" class="name">Usuario</span>
+          <span id="user-badge" class="badge">ROLE</span>
+        </div>
+        <button id="btn-open-audit" class="btn btn-outline hidden">📜 Consola Forense SIEM</button>
+        <button id="btn-logout" class="btn btn-outline">Salir</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- Barra de acciones y estadísticas -->
+      <section class="action-bar">
+        <div>
+          <h3>Registro de Incidentes</h3>
+          <p class="text-muted">Gestión de tickets con control de acceso por roles y auditoría inmutable.</p>
+        </div>
+        <div class="action-group">
+          <button id="btn-export-csv" class="btn btn-outline">📥 Exportar CSV</button>
+          <button id="btn-open-modal" class="btn btn-primary">+ Reportar Incidente</button>
+        </div>
+      </section>
+
+      <!-- Métricas y KPIs en Tiempo Real -->
+      <section class="kpi-grid">
+        <div class="card kpi-card kpi-critical">
+          <div class="kpi-header">
+            <span class="kpi-title">Amenazas Críticas</span>
+            <span class="kpi-icon">🚨</span>
+          </div>
+          <div class="kpi-value" id="kpi-critical">0</div>
+          <p class="kpi-sub">Requieren contención inmediata</p>
+        </div>
+
+        <div class="card kpi-card kpi-warning">
+          <div class="kpi-header">
+            <span class="kpi-title">En Investigación</span>
+            <span class="kpi-icon">⏳</span>
+          </div>
+          <div class="kpi-value" id="kpi-in-progress">0</div>
+          <p class="kpi-sub">Triaje y mitigación activa</p>
+        </div>
+
+        <div class="card kpi-card kpi-success">
+          <div class="kpi-header">
+            <span class="kpi-title">Resueltos / Mitigados</span>
+            <span class="kpi-icon">🛡️</span>
+          </div>
+          <div class="kpi-value" id="kpi-resolved">0</div>
+          <p class="kpi-sub">Incidentes neutralizados</p>
+        </div>
+
+        <div class="card kpi-card kpi-info">
+          <div class="kpi-header">
+            <span class="kpi-title">Total de Incidentes</span>
+            <span class="kpi-icon">📊</span>
+          </div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <p class="kpi-sub">Telemetría global registrada</p>
+        </div>
+      </section>
+
+      <!-- Analítica Visual Interactiva (SOC Analytics) -->
+      <section class="analytics-grid">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <h4>Distribución de Severidad</h4>
+            <span class="chart-badge">Prioridad</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-priority"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-header">
+            <h4>Estado Operativo de Mitigación</h4>
+            <span class="chart-badge">Ciclo de Vida</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-status"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabla de Incidentes -->
+      <section class="card table-card">
+        <!-- Barra de Búsqueda y Filtros Rápidos -->
+        <div class="table-toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="incident-search" placeholder="🔍 Buscar por título, descripción, autor o técnica..." autocomplete="off">
+            <button type="button" id="btn-clear-search" class="btn-clear-search hidden" title="Limpiar búsqueda">✕</button>
+          </div>
+          <div class="filter-pills" id="filter-pills">
+            <button type="button" class="filter-pill active" data-filter="ALL">Todos</button>
+            <button type="button" class="filter-pill pill-critical" data-filter="CRITICAL">Críticos</button>
+            <button type="button" class="filter-pill pill-warning" data-filter="IN_PROGRESS">En Progreso</button>
+            <button type="button" class="filter-pill pill-success" data-filter="RESOLVED">Resueltos</button>
+          </div>
+        </div>
+
+        <div class="table-meta-bar">
+          <span id="incidents-counter">Cargando registros...</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Título / Descripción</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Reportado por</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="incidents-list">
+              <!-- Inyectado vía JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal para nuevo ticket -->
+    <div id="modal-incident" class="modal hidden">
+      <div class="modal-card">
+        <h3>Reportar Incidente Crítico</h3>
+        <form id="create-incident-form">
+          <div class="input-group">
+            <label for="inc-title">Título del Incidente</label>
+            <input type="text" id="inc-title" required placeholder="Ej: Fuga de credenciales en VPN">
+          </div>
+
+          <div class="input-group">
+            <label for="inc-priority">Nivel de Prioridad</label>
+            <select id="inc-priority">
+              <option value="LOW">Baja (LOW)</option>
+              <option value="MEDIUM" selected>Media (MEDIUM)</option>
+              <option value="HIGH">Alta (HIGH)</option>
+              <option value="CRITICAL">Crítica (CRITICAL)</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="inc-desc">Descripción técnica del evento</label>
+            <textarea id="inc-desc" rows="4" required placeholder="Detalles de puertos, IP de origen o hallazgos forenses..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="btn-close-modal" class="btn btn-outline">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Registrar en Base de Datos</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Consola Forense SIEM (Auditoría para ADMIN) -->
+    <div id="modal-audit" class="modal hidden">
+      <div class="modal-card audit-modal-card">
+        <div class="terminal-header">
+          <div class="terminal-title-group">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <div class="terminal-title">
+              <span class="terminal-icon">🛡️</span>
+              <h3>Consola Forense SIEM <span>// Audit Trail</span></h3>
+              <span class="terminal-live-badge">● LIVE TELEMETRY</span>
+            </div>
+          </div>
+          <button type="button" id="btn-close-audit" class="btn-close-terminal" title="Cerrar consola">✕</button>
+        </div>
+
+        <div class="audit-toolbar">
+          <div class="audit-meta">
+            <span class="audit-badge-tier">SOC TIER-3 AUDITORÍA INMUTABLE</span>
+            <span id="audit-logs-count" class="audit-counter">Cargando registros...</span>
+          </div>
+          <div class="audit-actions">
+            <button type="button" id="btn-export-audit-csv" class="btn btn-outline btn-sm">📥 Exportar Auditoría CSV</button>
+            <button type="button" id="btn-refresh-audit" class="btn btn-outline btn-sm">🔄 Recargar Logs</button>
+          </div>
+        </div>
+
+        <div class="audit-terminal-screen">
+          <div class="audit-terminal-header-row">
+            <span class="col-time">FECHA / HORA</span>
+            <span class="col-ip">IP ORIGEN</span>
+            <span class="col-action">ACCIÓN FORENSE</span>
+            <span class="col-user">OPERADOR</span>
+            <span class="col-details">DETALLES TÉCNICOS</span>
+          </div>
+          <div id="audit-logs-container" class="audit-stream">
+            <!-- Registros inyectados vía JavaScript -->
+          </div>
+        </div>
+
+        <div class="audit-footer">
+          <div class="audit-footer-info">
+            <span>🔒 Integridad de eventos garantizada en base de datos relacional PostgreSQL</span>
+          </div>
+          <button type="button" id="btn-close-audit-footer" class="btn btn-outline btn-sm">Cerrar Consola</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
