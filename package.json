@@ -22,6 +22,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
+    "sharp": "^0.35.4",
     "typescript": "^6.0.3"
   },
   "dependencies": {
